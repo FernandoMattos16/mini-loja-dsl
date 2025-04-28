@@ -1,0 +1,19 @@
+[AVISO] Pedido 2: compradas 50 unidades de Borracha (faltavam 5)
+[AVISO] Pedido 4: compradas 50 unidades de Mochila (faltavam 1)
+[AVISO] Pedido 6: compradas 50 unidades de Apontador (faltavam 2)
+[AVISO] Pedido 8: compradas 50 unidades de Lapis (faltavam 10)
+[AVISO] Pedido 10: compradas 50 unidades de Tesoura (faltavam 3)
+
+Estoque Atual:
+- Caneta      : 28 unidades
+- Caderno     : 10 unidades
+- Mochila     : 49 unidades
+- Borracha    : 45 unidades
+- Lapis       : 40 unidades
+- MarcaTexto  : 5 unidades
+- Regua       : 5 unidades
+- Cola        : 2 unidades
+- Tesoura     : 47 unidades
+- Apontador   : 48 unidades
+
+Lucro líquido: R$ 549,00

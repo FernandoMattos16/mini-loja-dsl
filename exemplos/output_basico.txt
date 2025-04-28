@@ -1,0 +1,5 @@
+Estoque Atual:
+- Caneta : 28 unidades
+- Caderno: 15 unidades
+
+Lucro líquido: R$ 38,00
