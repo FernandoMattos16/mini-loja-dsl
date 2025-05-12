@@ -1,17 +1,19 @@
-CC      = gcc
-LEX     = flex
-YACC    = bison -d -v
+LEX       = flex
+YACC      = bison -d -v
+CC        = gcc
+CFLAGS    = -Wall
+LDFLAGS   = -lfl
 
 all: miniloja
 
-lexer.c: src/lexer.l
-	$(LEX) -o lexer.c src/lexer.l
+scanner.c: src/scanner.l
+	$(LEX) -o scanner.c src/scanner.l
 
 parser.tab.c parser.tab.h: src/parser.y
-	$(YACC) -d -v -o parser.tab.c src/parser.y
+	$(YACC) -o parser.tab.c src/parser.y
 
-miniloja: lexer.c parser.tab.c
-	$(CC) lexer.c parser.tab.c -lfl -o miniloja
+miniloja: scanner.c parser.tab.c
+	$(CC) $(CFLAGS) scanner.c parser.tab.c -o miniloja $(LDFLAGS)
 
 clean:
-	rm -f lexer.c parser.tab.c parser.tab.h miniloja
+	rm -f scanner.c parser.tab.c parser.tab.h miniloja parser.output

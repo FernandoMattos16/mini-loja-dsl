@@ -3,23 +3,29 @@
 #include <stdlib.h>
 #include <string.h>
 extern FILE *yyin;
-void yyerror(const char *s);
+extern int yylex(void);
+
+void yyerror(const char *s) {
+    fprintf(stderr, "Erro de sintaxe: %s\n", s);
+}
 %}
 
-/* tipos de valor que os tokens carregam */
+/* Valores que os tokens carregam */
 %union {
     char  *str;
     double num;
 }
 
-/* tokens com valor */
+/* Tokens com valor */
 %token <str> NOME TEXTO
 %token <num> NUMERO
 
-/* tokens literais (palavras-chave) */
+/* Palavras‐chave e símbolos */
 %token PRODUTO PEDIDO FIM_PEDIDOS PROCESSAR_PEDIDOS ENQUANTO
 %token ATENDER_PEDIDO COMPRAR SE ENTAO FIM AVISO MOSTRAR
 %token ESTOQUE LUCRO CUSTO VALOR QUANTIDADE FILA
+
+%start programa
 
 %%
 
@@ -38,6 +44,7 @@ comando
     | FIM_PEDIDOS
     | PROCESSAR_PEDIDOS
     | loop_fila
+    | ATENDER_PEDIDO
     | relatorio
     ;
 
@@ -53,12 +60,21 @@ relatorio
 %%
 
 int main(int argc, char **argv) {
-    if (argc > 1) yyin = fopen(argv[1], "r");
-    else           yyin = stdin;
-    yyparse();
-    return 0;
-}
+    if (argc > 1) {
+        yyin = fopen(argv[1], "r");
+        if (!yyin) {
+            perror("Erro ao abrir arquivo");
+            return 1;
+        }
+    } else {
+        yyin = stdin;
+    }
 
-void yyerror(const char *s) {
-    fprintf(stderr, "Erro sintático: %s\n", s);
+    int result = yyparse();
+    if (result == 0) {
+        printf("==> Análise sintática concluída com sucesso!\n");
+    } else {
+        printf("==> Erros de sintaxe foram encontrados.\n");
+    }
+    return result;
 }
