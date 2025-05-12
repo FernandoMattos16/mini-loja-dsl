@@ -1,0 +1,8 @@
+# artefatos de compilação
+*.o
+miniloja
+# diretórios de build
+build/
+# arquivos temporários
+*.swp
+*.DS_Store
