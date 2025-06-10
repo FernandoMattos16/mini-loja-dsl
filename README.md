@@ -1,35 +1,51 @@
 # Mini-Loja DSL
 
-Mini-Loja é uma linguagem específica de domínio (DSL) em **português** criada para a APS de Lógica da Computação 2025/1. Seu objetivo é modelar rotinas de varejo — cadastro de produtos, fila de pedidos, vendas, reposições automáticas e relatórios de estoque/lucro — usando uma sintaxe curta e intuitiva. A linguagem demonstra variáveis, condição (`SE … ENTAO …`), e loop real (`ENQUANTO FILA > 0 … FIM`) compilados com Flex/Bison.
+**Mini-Loja** é uma linguagem de domínio específico (DSL) em **português** criada para a APS de **Lógica da Computação 2025/1**.  
+Com ela você descreve, num arquivo de texto, toda a rotina de uma loja:
 
-## Como compilar
+* cadastro de produtos (`PRODUTO …`),  
+* formação de fila de pedidos (`PEDIDO …` → `FIM_PEDIDOS`),  
+* processamento automático (`PROCESSAR_PEDIDOS … ENQUANTO FILA > 0 … FIM`),  
+* compras emergenciais (`COMPRAR ULTIMO_PRODUTO N`) e avisos,  
+* relatórios finais de **estoque** e **lucro**.
 
-Você precisa de **flex**, **bison** e **gcc** instalados. No Ubuntu/WSL:
+A sintaxe usa apenas palavras-chave em português e demonstra **variáveis**, **condicionais** (`SE … ENTAO … FIM`) e **loop real** (`ENQUANTO … FIM`).  
+O front-end foi gerado com **Flex/Bison**; o back-end é uma **VM em C** que interpreta um byte-code gerado pelo parser.
+
+---
+
+## ⚙️ Compilação
+
+Requisitos: `flex`, `bison`, `gcc` (instale com `sudo apt install build-essential flex bison`).
 
 ```bash
-sudo apt update
-sudo apt install build-essential flex bison
-```
-
-Em seguida, na raiz do projeto:
-
-```bash
+git clone https://github.com/seu-usuario/mini-loja-dsl.git
+cd mini-loja-dsl
 make clean
-make
+make          # cria o executável ./miniloja
 ```
 
 ## Como Utilizar
 
-Depois de compilar com `make`, você terá o executável `miniloja`. Abaixo dois exemplos de uso:
-
-### Exemplo válido
+Depois de compilar com `make`, você terá o executável `miniloja`. Assim, basta rodar:
 
 ```bash
-$ ./miniloja examples/loja_basico.txt
-==> Análise sintática concluída com sucesso!
+./miniloja <arquivo-de-entrada.txt>
 ```
 
-### Exemplo inválido
+### ✅ Exemplo válido
+
+```bash
+$ ./miniloja exemplos/input_basico.txt
+
+Estoque Atual:
+- Caneta : 28 unidades
+- Caderno: 15 unidades
+
+Lucro líquido: R$ 38,00
+```
+
+### ❌ Exemplo inválido
 
 Caso rode algum arquivo de input incorreto para a linguagem em questão:
 
@@ -38,46 +54,77 @@ $ ./miniloja examples/input_errado.txt
 Erro de sintaxe: syntax error
 ==> Erros de sintaxe foram encontrados.
 ```
+Exit code 0 indica sucesso; qualquer outro valor sinaliza erro de sintaxe.
 
-## EBNF (v 0.1)
+## Arquitetura Básica
+
+```scss
+┌───────────────┐   lexer.l   ┌───────────────┐
+│   Fonte DSL   │ ─────────► │    Tokens      │
+└───────────────┘             └───────────────┘
+        │                         │
+        ▼    parser.y (Bison)     ▼
+┌─────────────────────────────────────┐
+│      Byte-code (array Instr)        │
+└─────────────────────────────────────┘
+        │    vm_execute() (C)         │
+        ▼                             ▼
+┌───────────────┐               ┌───────────────┐
+│      VM       │  interpreta   │   Relatório   │
+└───────────────┘               └───────────────┘
+
+```
+
+* OpCodes: OP_ATENDER, OP_PROCESSAR, OP_SHOW_EST, OP_SHOW_LUC…
+
+* Reposição automática: a quantidade é definida em tempo de execução pelo comando COMPRAR.
+
+## EBNF 
 
 ```ebnf
-PROGRAMA       = { COMANDO } ;
+PROGRAMA       = declaracoes , pedidos , processamento , relatorio ;
 
-COMANDO        = PRODUTO_DEF
-               | PEDIDO_DEF
-               | "FIM_PEDIDOS"
-               | "PROCESSAR_PEDIDOS"
-               | LOOP_FILA
-               | RELATORIO ;
+declaracoes    = { PRODUTO_DEF } ;
+PRODUTO_DEF    = "PRODUTO" , Nome , "VALOR" , Numero ,
+                 "CUSTO" , Numero , "ESTOQUE" , Numero ;
 
-PRODUTO_DEF    = "PRODUTO", Nome,
-                 "VALOR", Numero,
-                 "CUSTO", Numero,
-                 "ESTOQUE", Numero ;
+pedidos        = { PEDIDO_DEF } , "FIM_PEDIDOS" ;
+PEDIDO_DEF     = "PEDIDO" , Numero , "PRODUTO" , Nome ,
+                 "QUANTIDADE" , Numero ;
 
-PEDIDO_DEF     = "PEDIDO", Numero,
-                 "PRODUTO", Nome,
-                 "QUANTIDADE", Numero ;
-
-LOOP_FILA      = "ENQUANTO", "FILA", ">", Numero ,
+processamento  = "PROCESSAR_PEDIDOS" , LOOP_FILA ;
+LOOP_FILA      = "ENQUANTO" , "FILA" , ">" , Numero ,
                    { COMANDO_LOOP } ,
                  "FIM" ;
 
 COMANDO_LOOP   = "ATENDER_PEDIDO"
-               | COMPRA_CONDICIONAL
-               | AVISO ;
+               | COMPRA_CONDICIONAL ;
 
 COMPRA_CONDICIONAL
-               = "SE", "ULTIMO_PEDIDO_EXIGE_COMPRA", "ENTAO",
-                     "COMPRAR", "ULTIMO_PRODUTO", Numero ,
-                     [ AVISO ] ,
-                 "FIM" ;
+               = "SE" , "ULTIMO_PEDIDO_EXIGE_COMPRA" , "ENTAO"
+                 , "COMPRAR" , "ULTIMO_PRODUTO" , Numero
+                 , "AVISO" , TextoConcat
+                 , "FIM" ;
 
-AVISO          = "AVISO", Texto ;
+relatorio      = "MOSTRAR" , "ESTOQUE"
+                 , "MOSTRAR" , "LUCRO" ;
 
-RELATORIO      = "MOSTRAR", ( "ESTOQUE" | "LUCRO" ) ;
+Nome           = identificador ;
+Numero         = inteiro | decimal ;
+TextoConcat    = TEXTO | Nome | TextoConcat "+" (TEXTO | Nome) ;
+```
+## Casos de teste disponíveis
 
-Nome           = ? identificador ? ;
-Numero         = ? inteiro ou decimal ? ;
-Texto          = ? string entre aspas ? ;
+A pasta **`exemplos/`** contém dois programas-exemplo prontos para rodar:
+
+| Arquivo | O que demonstra |
+|---------|-----------------|
+| `loja_basico.txt` | 2 produtos, 2 pedidos, loop simples sem compra extra | 
+| `input_intermediario.txt` | 10 produtos, 10 pedidos, reabastecimento automático com avisos |
+
+Para testar:
+
+```bash
+./miniloja exemplos/input_basico.txt          # caso mínimo
+./miniloja exemplos/input_intermediario.txt  # caso completo
+```
