@@ -5,6 +5,7 @@
 #include <string.h>
 extern FILE *yyin;
 extern int yylex(void);
+extern int restock_default;
 
 int idx_prod(const char *nome);  /* protótipo */
 
@@ -25,6 +26,7 @@ void yyerror(const char *s){ fprintf(stderr,"Erro de sintaxe: %s\n", s); }
 %token PRODUTO PEDIDO FIM_PEDIDOS PROCESSAR_PEDIDOS ENQUANTO
 %token ATENDER_PEDIDO COMPRAR SE ENTAO FIM AVISO MOSTRAR
 %token ESTOQUE LUCRO CUSTO VALOR QUANTIDADE FILA
+%token PLUS
 
 %start programa   
 
@@ -75,9 +77,25 @@ loop_fila
     : ENQUANTO FILA '>' NUMERO comandos_loop FIM
     ;
 
+texto_concat
+    : TEXTO
+    | NOME
+    | texto_concat PLUS TEXTO
+    | texto_concat PLUS NOME
+    ;
+
+compra_condicional
+    : SE NOME ENTAO COMPRAR NOME NUMERO
+      AVISO texto_concat FIM
+      {
+          restock_default = (int)$6;
+      }
+    ;
+
 comandos_loop
     : /* vazio */
     | comandos_loop ATENDER_PEDIDO { code[pc++] = (Instr){OP_ATENDER,0,0}; }
+    | comandos_loop compra_condicional
     ;
 
 relatorio

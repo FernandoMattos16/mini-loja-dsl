@@ -11,6 +11,7 @@ typedef struct {           /* produto                       */
     char nome[64];
     double valor, custo;
     int estoque;
+    int restock;
 } Produto;
 
 typedef struct {           /* pedido                        */

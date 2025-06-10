@@ -35,6 +35,7 @@ STRING          \"([^\"\\]|\\.)*\"
 "VALOR"                   return VALOR;
 "QUANTIDADE"              return QUANTIDADE;
 "FILA"                    return FILA;
+"+"                       return PLUS;
 
 {NUMBER} { 
     /* padroniza vírgula para ponto */

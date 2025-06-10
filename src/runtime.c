@@ -22,6 +22,8 @@ int     ULTIMO_PEDIDO_EXIGE_COMPRA    = 0;
 /* métricas financeiras */
 double  receita = 0.0;
 double  despesa = 0.0;
+int restock_default = 50;   /* padrão, se COMPRAR nunca aparecer */
+
 
 /* ───── Helpers  ────────────────────────────────────────────────────── */
 int idx_prod(const char *nome) {
@@ -40,11 +42,13 @@ static void processar_pedido(Pedido *p) {
 
     if (pr->estoque < p->qtd) {
         FALTAVAM = p->qtd - pr->estoque;
-        pr->estoque += 50;                       /* compra fixa de 50          */
-        despesa += 50 * pr->custo;
         ULTIMO_PEDIDO_EXIGE_COMPRA = 1;
-        printf("[AVISO] Pedido %d: compradas 50 unidades de %s (faltavam %d)\n",
-               NUMERO_PEDIDO, pr->nome, FALTAVAM);
+
+        pr->estoque += restock_default;        /* compra N unidades */
+        
+
+        printf("[AVISO] Pedido %d: compradas %d unidades de %s (faltavam %d)\n",
+            NUMERO_PEDIDO, restock_default, pr->nome, FALTAVAM);
     }
 
     pr->estoque -= p->qtd;
@@ -67,12 +71,14 @@ void vm_execute(void) {
                 next_ped = 0;
                 break;
 
-            case OP_ATENDER:         /* atende 1 pedido e repete se ainda há fila */
+
+            case OP_ATENDER:
                 if (next_ped < nped) {
                     processar_pedido(&fila[next_ped++]);
-                    if (next_ped < nped) ip--;   /* repete este opcode      */
+                    if (next_ped < nped) ip--;   /* repete   */
                 }
                 break;
+
 
             case OP_SHOW_EST:
                 printf("Estoque Atual:\n");
@@ -84,6 +90,7 @@ void vm_execute(void) {
             case OP_SHOW_LUC:
                 printf("\nLucro líquido: R$ %.2f\n", receita - despesa);
                 break;
+            
 
             case OP_END:             /* finaliza execução */
                 return;
