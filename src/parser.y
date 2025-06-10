@@ -11,20 +11,22 @@ int idx_prod(const char *nome);  /* protótipo */
 void yyerror(const char *s){ fprintf(stderr,"Erro de sintaxe: %s\n", s); }
 %}
 
-/* Valores que os tokens carregam */
+/* tipos de valor que os tokens carregam */
 %union {
     char  *str;
     double num;
 }
 
-/* Tokens com valor */
+/* tokens com valor */
 %token <str> NOME TEXTO
 %token <num> NUMERO
 
-/* Palavras‐chave e símbolos */
+/* tokens literais (palavras-chave) */
 %token PRODUTO PEDIDO FIM_PEDIDOS PROCESSAR_PEDIDOS ENQUANTO
 %token ATENDER_PEDIDO COMPRAR SE ENTAO FIM AVISO MOSTRAR
 %token ESTOQUE LUCRO CUSTO VALOR QUANTIDADE FILA
+
+%start programa   
 
 %%
 
@@ -55,7 +57,6 @@ comando
     | ATENDER_PEDIDO      { code[pc++] = (Instr){ OP_ATENDER,0,0}; }
     | relatorio           /* ← nome do não-terminal em minúsculo */
     | loop_fila
-    | relatorio
     ;
 
 loop_fila
@@ -69,10 +70,16 @@ relatorio
 
 %%
 
-int main(int argc, char **argv) {
-    if (argc > 1) yyin = fopen(argv[1], "r");
-    else           yyin = stdin;
-    yyparse();
+int main(int argc, char **argv){
+    if(argc > 1) yyin = fopen(argv[1], "r");
+    else          yyin = stdin;
+    if(!yyin){ perror("fopen"); return 1; }
+
+    pc = 0;                      /* zera bytecode */
+    if(yyparse() == 0){
+        code[pc++] = (Instr){ OP_END, 0, 0 };
+        vm_execute();            /* interpreta na mini-VM */
+    }
     return 0;
 }
 
