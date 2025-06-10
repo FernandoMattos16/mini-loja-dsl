@@ -25,6 +25,23 @@ make clean
 make          # cria o executável ./miniloja
 ```
 
+## Artefatos gerados após `make`
+
+Depois de executar **`make`** na raiz do projeto, os seguintes arquivos aparecem na pasta principal:
+
+| Arquivo | Como é criado | Para que serve |
+|---------|---------------|----------------|
+| **`miniloja`** | `gcc scanner.c parser.tab.c runtime.o -o miniloja` | Executável final que interpreta programas Mini-Loja. |
+| **`scanner.c`** | gerado pelo **Flex** a partir de `src/scanner.l` | Implementa `yylex()` – responsável por transformar o texto de entrada em tokens. |
+| **`parser.tab.c`** | gerado pelo **Bison** a partir de `src/parser.y` | Contém a máquina de estados LR(1) do parser (`yyparse()`) e chamadas às ações semânticas que produzem o byte-code. |
+| **`parser.tab.h`** | gerado junto com `parser.tab.c` | Define os números de token (`#define PRODUTO 261`, etc.) usados tanto pelo scanner quanto pelo parser. |
+| **`parser.output`** | gerado pelo Bison com a flag `-v` | Relatório de depuração: lista estados da gramática, conflitos, símbolos não usados. Útil apenas para análise interna. |
+| **`runtime.o`** | `gcc -c src/runtime.c` | Objeto com a VM (`vm_execute`) e as estruturas de dados (produtos, fila). Ligado no passo final. |
+
+> **Limpeza**  
+> Execute `make clean` para remover todos esses artefatos e deixar o diretório só com os fontes.
+
+
 ## Como Utilizar
 
 Depois de compilar com `make`, você terá o executável `miniloja`. Assim, basta rodar:
