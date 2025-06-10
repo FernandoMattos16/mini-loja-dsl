@@ -31,41 +31,58 @@ void yyerror(const char *s){ fprintf(stderr,"Erro de sintaxe: %s\n", s); }
 %%
 
 programa
-    : comandos
+    : declaracoes pedidos processamento relatorio
     ;
 
-comandos
-    : /* vazio */
-    | comandos comando
+declaracoes
+    : /* zero ou mais PRODUTO ... */
+    | declaracoes declaracao_produto
     ;
 
-comando
+declaracao_produto
     : PRODUTO NOME VALOR NUMERO CUSTO NUMERO ESTOQUE NUMERO
       {
         int idx = nprod++;
         strcpy(prod[idx].nome, $2);
-        prod[idx].valor  = $4;
-        prod[idx].custo  = $6;
-        code[pc++] = (Instr){ OP_PROD, idx, $8 };
+        prod[idx].valor   = $4;
+        prod[idx].custo   = $6;
+        prod[idx].estoque = (int)$8;
       }
-    | PEDIDO NUMERO PRODUTO NOME QUANTIDADE NUMERO
+    ;
+
+pedidos
+    : lista_pedido FIM_PEDIDOS
+    ;
+
+lista_pedido
+    : /* vazio */
+    | lista_pedido linha_pedido
+    ;
+
+linha_pedido
+    : PEDIDO NUMERO PRODUTO NOME QUANTIDADE NUMERO
       {
         int idx = idx_prod($4);
-        code[pc++] = (Instr){ OP_PEDIDO, idx, $6 };
+        fila[nped++] = (Pedido){ idx, (int)$6 }; 
       }
-    | PROCESSAR_PEDIDOS   { code[pc++] = (Instr){ OP_PROCESSAR,0,0}; }
-    | ATENDER_PEDIDO      { code[pc++] = (Instr){ OP_ATENDER,0,0}; }
-    | relatorio           /* ← nome do não-terminal em minúsculo */
-    | loop_fila
+    ;
+
+processamento
+    : PROCESSAR_PEDIDOS loop_fila
     ;
 
 loop_fila
-    : ENQUANTO FILA '>' NUMERO comandos FIM
+    : ENQUANTO FILA '>' NUMERO comandos_loop FIM
+    ;
+
+comandos_loop
+    : /* vazio */
+    | comandos_loop ATENDER_PEDIDO { code[pc++] = (Instr){OP_ATENDER,0,0}; }
     ;
 
 relatorio
-    : MOSTRAR ESTOQUE { code[pc++] = (Instr){ OP_SHOW_EST,0,0}; }
-    | MOSTRAR LUCRO   { code[pc++] = (Instr){ OP_SHOW_LUC,0,0}; }
+    : MOSTRAR ESTOQUE { code[pc++] = (Instr){OP_SHOW_EST,0,0}; }
+      MOSTRAR LUCRO   { code[pc++] = (Instr){OP_SHOW_LUC,0,0}; }
     ;
 
 %%
@@ -81,8 +98,4 @@ int main(int argc, char **argv){
         vm_execute();            /* interpreta na mini-VM */
     }
     return 0;
-}
-
-void yyerror(const char *s) {
-    fprintf(stderr, "Erro sintático: %s\n", s);
 }

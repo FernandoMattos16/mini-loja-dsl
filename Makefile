@@ -1,7 +1,7 @@
 LEX      = flex
 YACC     = bison -d -v
 CC       = gcc
-CFLAGS   = -Wall
+CFLAGS   = -Wall -Isrc
 LDFLAGS  = -lfl
 
 all: miniloja
@@ -19,4 +19,4 @@ miniloja: scanner.c parser.tab.c runtime.o
 	$(CC) $(CFLAGS) scanner.c parser.tab.c runtime.o -o miniloja $(LDFLAGS)
 
 clean:
-	rm -f scanner.c parser.tab.c parser.tab.h runtime.o miniloja
+	rm -f scanner.c parser.tab.c parser.tab.h runtime.o miniloja parser.output
